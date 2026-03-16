@@ -1,0 +1,7 @@
+## Interface: 120000
+## Title: Blue Assist Highlight
+## Notes: Replaces all action button highlight visuals with the blue animated highlight
+## Author: MIYANKO
+## Version: 1.0.0
+
+BlueAssistHighlight.lua
