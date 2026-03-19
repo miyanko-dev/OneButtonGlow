@@ -1,4 +1,4 @@
-# Blue Assist Highlight
+# Blue Button Glow
 
 Minimal WoW addon that replaces all action button highlight visuals (which natively look like the golden spell activation glow) with the newer blue animated highlight.
 
