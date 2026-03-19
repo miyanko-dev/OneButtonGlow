@@ -1,121 +1,122 @@
--- StrongCombatAssist: replace all action button highlight visuals with the blue animated highlight
+local ADDON_NAME = ...
 
-local blueGlowCache = {}
-local activeCount = {}
-local hookedButtons = {}
-local noop = function() end
+local blueGlows = {}
+local glowSources = {} -- [button] = { spellAlert, assistedHighlight }
+local hooked = false
 
-local ALERT_CHILDREN = { "ProcStartFlipbook", "ProcLoopFlipbook", "ProcAltGlow", "ProcLoop", "ProcStartAnim" }
 
-local function getOrCreateBlueGlow(button)
-    if blueGlowCache[button] then return blueGlowCache[button] end
-    local gf = CreateFrame("Frame", nil, button, "ActionBarButtonAssistedCombatHighlightTemplate")
-    gf:SetPoint("CENTER", button, "CENTER")
-    gf:Hide()
-    blueGlowCache[button] = gf
-    return gf
-end
-
-local function showBlueGlow(button)
-    activeCount[button] = (activeCount[button] or 0) + 1
-    local gf = getOrCreateBlueGlow(button)
-    local w, h = button:GetWidth(), button:GetHeight()
-    if w > 0 and h > 0 then
-        local gw, gh = w * 1.4, h * 1.4
-        gf:SetSize(gw, gh)
-        if gf.Flipbook then gf.Flipbook:SetSize(gw, gh) end
+local function GetBlueGlow(button)
+    if blueGlows[button] then return blueGlows[button] end
+    local glow = CreateFrame("Frame", nil, button, "ActionBarButtonAssistedCombatHighlightTemplate")
+    glow:SetPoint("CENTER", button, "CENTER", 0, 0)
+    local bw, bh = button:GetSize()
+    if bw > 0 and bh > 0 then
+        glow:SetSize(bw, bh)
+        if glow.Flipbook then glow.Flipbook:SetSize(bw * 1.47, bh * 1.47) end
     end
-    gf:Show()
-    if not gf.Flipbook.Anim:IsPlaying() then gf.Flipbook.Anim:Play() end
+    glow:Hide()
+    blueGlows[button] = glow
+    return glow
 end
 
-local function hideBlueGlow(button)
-    activeCount[button] = math.max(0, (activeCount[button] or 0) - 1)
-    if (activeCount[button] or 0) > 0 then return end
-    local gf = blueGlowCache[button]
-    if not gf then return end
-    gf.Flipbook.Anim:Stop()
-    gf:Hide()
-end
 
--- Force AssistedCombatHighlightFrame animation to always play, even out of combat
-local function onAssistedHighlightChanged(self, actionButton, shown)
-    if not actionButton then return end
-    local frame = actionButton.AssistedCombatHighlightFrame
-    if frame and frame.Flipbook and shown and not frame.Flipbook.Anim:IsPlaying() then
-        frame.Flipbook.Anim:Play()
+local function SyncGlowSize(button, glow)
+    local bw, bh = button:GetSize()
+    if bw > 0 and bh > 0 and (glow._cachedW ~= bw or glow._cachedH ~= bh) then
+        glow:SetSize(bw, bh)
+        if glow.Flipbook then glow.Flipbook:SetSize(bw * 1.47, bh * 1.47) end
+        glow._cachedW, glow._cachedH = bw, bh
     end
 end
 
--- Suppress a single alert child based on its actual object type:
--- AnimationGroups get stopped and their Play shadowed; Textures get hidden and their Show shadowed
-local function suppressAlertChild(child)
-    if not child then return end
-    if child:GetObjectType() == "AnimationGroup" then
-        child:Stop()
-        child.Play = noop
+
+local function EnsureGlowAnimating(glow)
+    if not (glow.Flipbook and glow.Flipbook.Anim) then return end
+    if not glow.Flipbook.Anim:IsPlaying() then glow.Flipbook.Anim:Play() end
+end
+
+
+local function ShowBlueGlow(button)
+    local glow = GetBlueGlow(button)
+    SyncGlowSize(button, glow)
+    glow:Show()
+    EnsureGlowAnimating(glow)
+end
+
+
+local function HideBlueGlow(button)
+    local glow = blueGlows[button]
+    if not glow then return end
+    if glow.Flipbook and glow.Flipbook.Anim then glow.Flipbook.Anim:Stop() end
+    glow:Hide()
+end
+
+
+local function UpdateGlowState(button)
+    local src = glowSources[button]
+    if src and (src.spellAlert or src.assistedHighlight) then
+        ShowBlueGlow(button)
     else
-        child:Hide()
-        child.Show = noop
+        HideBlueGlow(button)
+        glowSources[button] = nil
     end
 end
 
-local function trySetupAlertHooks(button)
-    if hookedButtons[button] or not button.SpellActivationAlert then return end
-    hookedButtons[button] = true
 
-    local alert = button.SpellActivationAlert
-
-    -- Parent alert frame is a real Frame, so HookScript works here
-    alert:HookScript("OnShow", function() showBlueGlow(button) end)
-    alert:HookScript("OnHide", function() hideBlueGlow(button) end)
-
-    for _, childName in ipairs(ALERT_CHILDREN) do
-        suppressAlertChild(alert[childName])
-    end
-
-    if button.ShowOverlayGlow then
-        hooksecurefunc(button, "ShowOverlayGlow", function(self)
-            if self.overlay then self.overlay:SetAlpha(0) end
-            showBlueGlow(self)
-        end)
-    end
-    if button.HideOverlayGlow then
-        hooksecurefunc(button, "HideOverlayGlow", function(self)
-            if self.overlay then self.overlay:SetAlpha(1) end
-            hideBlueGlow(self)
-        end)
+-- Suppress native alert and glow visuals
+local function SuppressBlizzardAlert(button)
+    if button.SpellActivationAlert then button.SpellActivationAlert:SetAlpha(0) end
+    if button.AssistedCombatRotationFrame and button.AssistedCombatRotationFrame.SpellActivationAlert then
+        button.AssistedCombatRotationFrame.SpellActivationAlert:SetAlpha(0)
     end
 end
 
-local initFrame = CreateFrame("Frame")
-initFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-initFrame:RegisterEvent("SPELL_ACTIVATION_OVERLAY_SHOW")
-initFrame:SetScript("OnEvent", function(self, event)
-    if event == "PLAYER_ENTERING_WORLD" then
-        if AssistedCombatManager then
-            hooksecurefunc(AssistedCombatManager, "SetAssistedHighlightFrameShown", onAssistedHighlightChanged)
+
+local function SuppressBlizzardAssistedHighlight(button)
+    if button.AssistedCombatHighlightFrame then button.AssistedCombatHighlightFrame:SetAlpha(0) end
+end
+
+
+-- Hook: ActionButtonSpellAlertManager
+local function OnSpellAlertShow(_, actionButton)
+    if not actionButton then return end
+    SuppressBlizzardAlert(actionButton)
+    if not glowSources[actionButton] then glowSources[actionButton] = {} end
+    glowSources[actionButton].spellAlert = true
+    UpdateGlowState(actionButton)
+end
+
+
+local function OnSpellAlertHide(_, actionButton)
+    if not actionButton then return end
+    local src = glowSources[actionButton]
+    if src then src.spellAlert = false end
+    UpdateGlowState(actionButton)
+end
+
+
+-- Hook: AssistedCombatManager
+local function OnAssistedHighlightChanged(_, actionButton, shown)
+    if not actionButton then return end
+    SuppressBlizzardAssistedHighlight(actionButton)
+    if not glowSources[actionButton] then glowSources[actionButton] = {} end
+    glowSources[actionButton].assistedHighlight = shown or false
+    UpdateGlowState(actionButton)
+end
+
+
+local eventFrame = CreateFrame("Frame")
+eventFrame:RegisterEvent("PLAYER_LOGIN")
+eventFrame:SetScript("OnEvent", function(self, event)
+    if event == "PLAYER_LOGIN" and not hooked then
+        if ActionButtonSpellAlertManager then
+            hooksecurefunc(ActionButtonSpellAlertManager, "ShowAlert", OnSpellAlertShow)
+            hooksecurefunc(ActionButtonSpellAlertManager, "HideAlert", OnSpellAlertHide)
         end
-        ActionBarButtonEventsFrame:ForEachFrame(trySetupAlertHooks)
-        self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-
-    elseif event == "SPELL_ACTIVATION_OVERLAY_SHOW" then
-        C_Timer.After(0, function()
-            ActionBarButtonEventsFrame:ForEachFrame(function(button)
-                local wasAlreadyHooked = hookedButtons[button]
-                trySetupAlertHooks(button)
-
-                if button.SpellActivationAlert and button.SpellActivationAlert:IsShown() then
-                    -- Suppress children that may have been shown before hooks were set up
-                    for _, childName in ipairs(ALERT_CHILDREN) do
-                        suppressAlertChild(button.SpellActivationAlert[childName])
-                    end
-                    -- OnShow hook was not set up yet for this button's first proc, trigger manually
-                    if not wasAlreadyHooked then
-                        showBlueGlow(button)
-                    end
-                end
-            end)
-        end)
+        if AssistedCombatManager then
+            hooksecurefunc(AssistedCombatManager, "SetAssistedHighlightFrameShown", OnAssistedHighlightChanged)
+        end
+        hooked = true
+        self:UnregisterEvent("PLAYER_LOGIN")
     end
 end)
