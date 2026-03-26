@@ -4,7 +4,6 @@ local blueGlows = {}
 local glowSources = {} -- [button] = { spellAlert, assistedHighlight }
 local hooked = false
 
-
 local function GetBlueGlow(button)
     if blueGlows[button] then return blueGlows[button] end
     local glow = CreateFrame("Frame", nil, button, "ActionBarButtonAssistedCombatHighlightTemplate")
@@ -19,7 +18,6 @@ local function GetBlueGlow(button)
     return glow
 end
 
-
 local function SyncGlowSize(button, glow)
     local bw, bh = button:GetSize()
     if bw > 0 and bh > 0 and (glow._cachedW ~= bw or glow._cachedH ~= bh) then
@@ -29,12 +27,10 @@ local function SyncGlowSize(button, glow)
     end
 end
 
-
 local function EnsureGlowAnimating(glow)
     if not (glow.Flipbook and glow.Flipbook.Anim) then return end
     if not glow.Flipbook.Anim:IsPlaying() then glow.Flipbook.Anim:Play() end
 end
-
 
 local function ShowBlueGlow(button)
     local glow = GetBlueGlow(button)
@@ -43,14 +39,12 @@ local function ShowBlueGlow(button)
     EnsureGlowAnimating(glow)
 end
 
-
 local function HideBlueGlow(button)
     local glow = blueGlows[button]
     if not glow then return end
     if glow.Flipbook and glow.Flipbook.Anim then glow.Flipbook.Anim:Stop() end
     glow:Hide()
 end
-
 
 local function UpdateGlowState(button)
     local src = glowSources[button]
@@ -62,7 +56,6 @@ local function UpdateGlowState(button)
     end
 end
 
-
 -- Suppress native alert and glow visuals
 local function SuppressBlizzardAlert(button)
     if button.SpellActivationAlert then button.SpellActivationAlert:SetAlpha(0) end
@@ -71,11 +64,9 @@ local function SuppressBlizzardAlert(button)
     end
 end
 
-
 local function SuppressBlizzardAssistedHighlight(button)
     if button.AssistedCombatHighlightFrame then button.AssistedCombatHighlightFrame:SetAlpha(0) end
 end
-
 
 -- Hook: ActionButtonSpellAlertManager
 local function OnSpellAlertShow(_, actionButton)
@@ -86,14 +77,12 @@ local function OnSpellAlertShow(_, actionButton)
     UpdateGlowState(actionButton)
 end
 
-
 local function OnSpellAlertHide(_, actionButton)
     if not actionButton then return end
     local src = glowSources[actionButton]
     if src then src.spellAlert = false end
     UpdateGlowState(actionButton)
 end
-
 
 -- Hook: AssistedCombatManager
 local function OnAssistedHighlightChanged(_, actionButton, shown)
@@ -103,7 +92,6 @@ local function OnAssistedHighlightChanged(_, actionButton, shown)
     glowSources[actionButton].assistedHighlight = shown or false
     UpdateGlowState(actionButton)
 end
-
 
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
