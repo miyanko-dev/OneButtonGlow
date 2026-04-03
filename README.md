@@ -1,4 +1,4 @@
-# Single Button Glow
+# BlueButtonGlow
 
 WoW addon that replaces all action button highlight visuals with the blue animated highlight.
 
