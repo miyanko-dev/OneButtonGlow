@@ -1,7 +1,7 @@
-# BlueButtonGlow
+# Blue Button Glow
 
 WoW addon that replaces all action button highlight visuals with the blue animated highlight.
 
 ## Features
 
-- **Blue Highlight** - Uniformly applies the blue animated combat assist highlight to all highlighted action buttons
+- **Blue Highlight** - Replaces spell activation alerts and combat assist highlights with a uniform blue animated glow on all action buttons
