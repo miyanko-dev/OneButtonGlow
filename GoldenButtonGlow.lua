@@ -1,66 +1,52 @@
 local glowFrames = {}
 local glowSources = {}
 
--- Build a highlight overlay, via AssistedCombatHighlight template, to replace native button glows
+-- Build a proc glow overlay, via SpellAlert template, to replace native button glows
 
 local function buildGlowFrame(button)
-    local glow = CreateFrame("Frame", nil, button, "ActionBarButtonAssistedCombatHighlightTemplate")
+    local btnW, btnH = button:GetSize()
+    if btnW <= 0 or btnH <= 0 then return nil end
+
+    local glow = CreateFrame("Frame", nil, button, "ActionButtonSpellAlertTemplate")
     glow:SetPoint("CENTER")
+    glow:SetSize(btnW * 1.4, btnH * 1.4)
+    glow.ProcStartFlipbook:Hide()
     glow:Hide()
 
-    local btnW, btnH = button:GetSize()
-    if btnW > 0 and btnH > 0 then
-        glow:SetSize(btnW, btnH)
-        if glow.Flipbook then
-            glow.Flipbook:SetSize(btnW * 1.5, btnH * 1.5)
-        end
-        glow._prevW, glow._prevH = btnW, btnH
-    end
-
+    glow._prevW, glow._prevH = btnW, btnH
     glowFrames[button] = glow
     return glow
 end
 
--- Sync glow dimensions, via cached size comparison, to match dynamic button resizing
+-- Sync glow dimensions, via cached size check, to match dynamic button resizing
 
 local function syncGlowSize(button, glow)
     local btnW, btnH = button:GetSize()
     if btnW <= 0 or btnH <= 0 then return end
     if glow._prevW == btnW and glow._prevH == btnH then return end
 
-    glow:SetSize(btnW, btnH)
-    if glow.Flipbook then
-        glow.Flipbook:SetSize(btnW * 1.5, btnH * 1.5)
-    end
+    glow:SetSize(btnW * 1.4, btnH * 1.4)
     glow._prevW, glow._prevH = btnW, btnH
 end
 
--- Activate custom glow, via size sync and flipbook play, to indicate button highlight
+-- Activate proc glow, via direct loop play, to indicate button highlight
 
 local function activateGlow(button)
     local glow = glowFrames[button] or buildGlowFrame(button)
+    if not glow then return end
     syncGlowSize(button, glow)
 
     if not glow:IsShown() then
         glow:Show()
-    end
-
-    local flipbook = glow.Flipbook
-    if flipbook and flipbook.Anim and not flipbook.Anim:IsPlaying() then
-        flipbook.Anim:Play()
+        glow.ProcLoop:Play()
     end
 end
 
--- Deactivate custom glow, via animation stop and hide, to clear button highlight
+-- Deactivate proc glow, via hide, to clear button highlight
 
 local function deactivateGlow(button)
     local glow = glowFrames[button]
     if not glow then return end
-
-    local flipbook = glow.Flipbook
-    if flipbook and flipbook.Anim then
-        flipbook.Anim:Stop()
-    end
     glow:Hide()
 end
 
@@ -77,7 +63,7 @@ local function refreshGlow(button)
     end
 end
 
--- Suppress native spell alert frame, via alpha override, to prevent duplicate highlights
+-- Suppress native spell alert, via alpha override, to prevent duplicate highlights
 
 local function suppressSpellAlert(button)
     if button.SpellActivationAlert then
@@ -98,7 +84,7 @@ local function suppressAssistedGlow(button)
     end
 end
 
--- Register spell alert source, via flag set and native suppression, to activate custom glow
+-- Register spell alert source, via native suppression and flag set, to activate custom glow
 
 local function onAlertShown(_, btn)
     if not btn then return end
@@ -122,7 +108,7 @@ local function onAlertHidden(_, btn)
     refreshGlow(btn)
 end
 
--- Sync assisted highlight source, via flag toggle and native suppression, to update custom glow
+-- Sync assisted highlight source, via native suppression and flag toggle, to update custom glow
 
 local function onAssistedChanged(_, btn, shown)
     if not btn then return end
@@ -135,7 +121,7 @@ local function onAssistedChanged(_, btn, shown)
     refreshGlow(btn)
 end
 
--- Hook button glow managers at login, via hooksecurefunc, to intercept native highlight triggers
+-- Hook glow managers at login, via hooksecurefunc, to intercept native highlight triggers
 
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
