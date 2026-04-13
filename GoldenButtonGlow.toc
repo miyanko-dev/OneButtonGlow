@@ -1,8 +1,0 @@
-## Interface: 120000
-## Title: Golden Button Glow
-## Notes: Replaces all action button highlight visuals with the golden proc glow
-## Author: MIYANKO
-## Version: 1.0.0
-## IconTexture: 7549166
-
-GoldenButtonGlow.lua
