@@ -3,6 +3,6 @@
 ## Notes: Replaces action button highlights with golden proc glow
 ## Author: MIYANKO
 ## Version: 2.0.0
-## IconTexture: 7549166
+## IconTexture: 7549438
 
 UnifiedButtonGlow.lua
