@@ -1,0 +1,8 @@
+## Interface: 120000
+## Title: Unified Button Glow
+## Notes: Replaces action button highlights with golden proc glow
+## Author: MIYANKO
+## Version: 2.0.0
+## IconTexture: 7549166
+
+UnifiedButtonGlow.lua
