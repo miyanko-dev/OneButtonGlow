@@ -1,0 +1,8 @@
+## Interface: 120005
+## Title: One Button Glow
+## Notes: Unifies spell activation and rotation assist highlights into a single golden proc glow
+## Author: MIYANKO
+## Version: 2.0.0
+## IconTexture: 7549438
+
+OneButtonGlow.lua

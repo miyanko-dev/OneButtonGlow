@@ -1,9 +1,10 @@
-# Clean Button Glow
+# One Button Glow
 
-WoW addon that replaces all action button highlight visuals with a clean proc glow.
+Replaces all action button highlight visuals with a single consistent golden proc glow.
 
 ## Features
 
-- **Proc Glow** - Replaces spell activation alerts and combat assist highlights with a uniform animated glow on all action buttons
-- **Spell Activation Alerts** - Custom glow plays when a spell proc triggers
-- **Assisted Combat Highlights** - Custom glow plays for rotation assist suggestions
+- **Spell Proc Glow** - Spell activation alerts trigger a golden animated proc glow
+- **Rotation Assist Glow** - Assisted combat rotation highlights use the same uniform glow
+- **No Duplicates** - Native highlight visuals are suppressed to prevent stacking effects
+- **Dynamic Sizing** - Glow adapts to button size changes automatically
