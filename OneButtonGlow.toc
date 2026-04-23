@@ -1,6 +1,7 @@
 ## Interface: 120005
 ## Title: One Button Glow
-## Notes: Unified golden proc glow for all action buttons in World of Warcraft.
+## Category: Action Bars
+## Notes: Replaces default action button proc glows with a unified golden effect for consistent visuals across every action bar.
 ## Author: MIYANKO
 ## Version: 1.0.0
 ## IconTexture: 7549438
