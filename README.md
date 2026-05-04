@@ -1,4 +1,4 @@
-# OneButtonGlow
+# One Button Glow
 
 Unified golden proc glow for all action buttons in World of Warcraft.
 
