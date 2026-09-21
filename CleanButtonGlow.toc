@@ -2,7 +2,7 @@
 ## Title: One Button Glow
 ## Category: Action Bars
 ## Notes: Replaces default action button proc glows with a unified golden glow for consistent visuals across every action bar.
-## Author: MIYANKO
+## Author: miyanko
 ## Version: 1.0.0
 ## IconTexture: 7549438
 
